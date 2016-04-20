@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 using System.Net.Http.Headers;
 using CommandLine;
 using CommandLine.Text;
+using Nito.AsyncEx;
 
 namespace AppD
 {
@@ -17,9 +18,7 @@ namespace AppD
         static void Main(String[] args)
         {
             if (!ParseCommandLine(args)) return;
-            Task t = new Task(GetApps);
-            t.Start();
-            Console.ReadLine();
+            AsyncContext.Run(() => GetApps());
         }
 
         static bool ParseCommandLine(String[] args)
@@ -46,7 +45,7 @@ namespace AppD
 
             HttpClient client = new HttpClient();
 
-            var byteArray = Encoding.ASCII.GetBytes(Options.User+":"+Options.Password);
+            var byteArray = Encoding.ASCII.GetBytes(Options.User + ":" + Options.Password);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             HttpResponseMessage response = await client.GetAsync(targetUrl);
