@@ -7,7 +7,7 @@ using System.Xml.Serialization;
 using System.Net.Http.Headers;
 using CommandLine;
 using CommandLine.Text;
-using Nito.AsyncEx;
+//using Nito.AsyncEx;
 
 namespace AppD
 {
@@ -18,7 +18,8 @@ namespace AppD
         static void Main(String[] args)
         {
             if (!ParseCommandLine(args)) return;
-            AsyncContext.Run(() => GetApps());
+            //AsyncContext.Run(() => GetApps());
+            GetApps().Wait();
         }
 
         static bool ParseCommandLine(String[] args)
@@ -36,7 +37,7 @@ namespace AppD
             return false;
         }
 
-        static async void GetApps()
+        static async Task GetApps()
         {
             //var targetUrl = "http://192.168.1.40:8090/controller/rest/applications";
             var targetUrl = Options.ControllerUrl + "/controller/rest/applications";
