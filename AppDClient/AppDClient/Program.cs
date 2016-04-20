@@ -5,27 +5,48 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Xml.Serialization;
 using System.Net.Http.Headers;
+using CommandLine;
+using CommandLine.Text;
 
 namespace AppD
 {
-    class program
+    class Program
     {
-        static void Main()
+        static CommandLineOptions Options { get; set; } = new CommandLineOptions();
+
+        static void Main(String[] args)
         {
+            if (!ParseCommandLine(args)) return;
             Task t = new Task(GetApps);
             t.Start();
             Console.ReadLine();
         }
 
+        static bool ParseCommandLine(String[] args)
+        {
+            if (CommandLine.Parser.Default.ParseArguments(args, Options))
+            {
+                if (Options.Verbose)
+                {
+                    Console.WriteLine("url: " + Options.ControllerUrl);
+                    Console.WriteLine("user: " + Options.User);
+                    Console.WriteLine("password: " + Options.Password);
+                }
+                return true;
+            }
+            return false;
+        }
+
         static async void GetApps()
         {
-            var targetUrl = "http://192.168.1.40:8090/controller/rest/applications";
+            //var targetUrl = "http://192.168.1.40:8090/controller/rest/applications";
+            var targetUrl = Options.ControllerUrl + "/controller/rest/applications";
 
-            Console.WriteLine("GET: + " + targetUrl);
+            Console.WriteLine("targetUrl: + " + targetUrl);
 
             HttpClient client = new HttpClient();
 
-            var byteArray = Encoding.ASCII.GetBytes("admin@customer1:pw");
+            var byteArray = Encoding.ASCII.GetBytes(Options.User+":"+Options.Password);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             HttpResponseMessage response = await client.GetAsync(targetUrl);
@@ -68,4 +89,30 @@ namespace AppD
         [XmlElement("name")]
         public String Name { get; set; }
     }
+
+    class CommandLineOptions
+    {
+        [Option('c', "controller", Required=true, HelpText = "Controller URL.")]
+        public string ControllerUrl { get; set; }
+
+        [Option('u', "user", Required=true, HelpText = "Controller User for REST Api")]
+        public string User { get; set; }
+
+        [Option('p', "password", Required=true, HelpText = "Controller Password for REST Api")]
+        public string Password { get; set; }
+
+        [Option('v', null, HelpText = "Print details during execution.")]
+        public bool Verbose { get; set; }
+
+        [HelpOption]
+        public string GetUsage()
+        {
+            var help = new HelpText();
+            help.AddPreOptionsLine("usage: AppDClient [-<option> <optionvalue>]...");
+            help.AddPreOptionsLine("example: AppDClient -c http://localhost:8090 -u abc@customer1 -p pwd");
+            help.AddOptions(this);
+            return help;
+        }
+    }
+
 }
